@@ -1,17 +1,23 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { fetchInterests, fetchMe } from "@/lib/api";
+import { fetchInterests, fetchMe, type Interest, type Me } from "@/lib/api";
 import { PreferencesForm } from "@/components/PreferencesForm";
+import { ApiUnavailable } from "@/components/ApiUnavailable";
+
+export const maxDuration = 30;
 
 export default async function OnboardingPage() {
   const { getToken } = await auth();
   const token = await getToken();
   if (!token) redirect("/sign-in");
 
-  const [interests, me] = await Promise.all([
-    fetchInterests(),
-    fetchMe(token),
-  ]);
+  let interests: Interest[];
+  let me: Me;
+  try {
+    [interests, me] = await Promise.all([fetchInterests(), fetchMe(token)]);
+  } catch {
+    return <ApiUnavailable />;
+  }
 
   if (me.onboarding_completed) redirect("/");
 

@@ -3,6 +3,9 @@ import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { fetchMe } from "@/lib/api";
+import { ApiUnavailable } from "@/components/ApiUnavailable";
+
+export const maxDuration = 30;
 
 export default async function Home() {
   const { userId, getToken } = await auth();
@@ -39,7 +42,12 @@ export default async function Home() {
   }
 
   const token = await getToken();
-  const me = token ? await fetchMe(token) : null;
+  let me;
+  try {
+    me = token ? await fetchMe(token) : null;
+  } catch {
+    return <ApiUnavailable />;
+  }
 
   if (!me?.onboarding_completed) {
     redirect("/onboarding");

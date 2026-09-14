@@ -22,8 +22,15 @@ export type PreferencesInput = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Render's free tier can cold-start after inactivity; give it real time to
+// wake up rather than hanging until the platform's own request timeout.
+const API_TIMEOUT_MS = 25_000;
+
 export async function fetchInterests(): Promise<Interest[]> {
-  const res = await fetch(`${API_URL}/interests`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/interests`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error("Failed to load interests");
   return res.json();
 }
@@ -32,6 +39,7 @@ export async function fetchMe(token: string): Promise<Me> {
   const res = await fetch(`${API_URL}/me`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error("Failed to load profile");
   return res.json();
