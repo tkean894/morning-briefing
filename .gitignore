@@ -1,0 +1,20 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+web/.env*.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+api/.env
+
+# Editors / OS
+.DS_Store
+.vscode/
+*.log
+
+# Env files (never commit real secrets)
+.env
+.env.local
