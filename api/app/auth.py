@@ -1,5 +1,6 @@
 import base64
 import functools
+import logging
 
 import jwt
 from fastapi import Depends, HTTPException, Request
@@ -9,6 +10,8 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.models import User
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @functools.lru_cache
@@ -31,7 +34,10 @@ def _verify_session_token(token: str) -> str:
     try:
         signing_key = _jwks_client().get_signing_key_from_jwt(token)
         claims = jwt.decode(token, signing_key.key, algorithms=["RS256"])
-    except jwt.PyJWTError as exc:
+    except Exception as exc:
+        logger.error(
+            "Clerk token verification failed: %s: %s", type(exc).__name__, exc
+        )
         raise HTTPException(status_code=401, detail="Invalid session token") from exc
     return claims["sub"]
 
