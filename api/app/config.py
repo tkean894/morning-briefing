@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     clerk_publishable_key: str = ""
     clerk_secret_key: str = ""
     environment: str = "development"
+    guardian_api_key: str = ""
+    nyt_api_key: str = ""
 
 
 settings = Settings()

@@ -1,6 +1,7 @@
 import datetime
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -14,7 +15,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     clerk_user_id: Mapped[str] = mapped_column(unique=True, index=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
-        default=lambda: datetime.datetime.now(datetime.timezone.utc)
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
     )
 
     interests: Mapped[list["UserInterest"]] = relationship(
@@ -58,12 +60,49 @@ class UserInterest(Base):
     interest: Mapped["Interest"] = relationship()
 
 
+class Source(Base):
+    __tablename__ = "sources"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(unique=True, index=True)
+    name: Mapped[str]
+    kind: Mapped[str]  # "rss" | "api_guardian" | "api_nyt"
+    category: Mapped[str]  # loosely matches an interests.slug broad category
+    feed_url: Mapped[str | None]
+    credibility_tier: Mapped[int] = mapped_column(default=2)
+    active: Mapped[bool] = mapped_column(default=True)
+
+
+class RawArticle(Base):
+    __tablename__ = "raw_articles"
+    __table_args__ = (UniqueConstraint("source_id", "external_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"))
+    external_id: Mapped[str]
+    url: Mapped[str]
+    title: Mapped[str]
+    summary: Mapped[str | None]
+    published_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    fetched_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+    raw_payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    source: Mapped["Source"] = relationship()
+
+
 class UserPreference(Base):
     __tablename__ = "user_preferences"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     briefing_length_minutes: Mapped[int] = mapped_column(default=10)
     audio_enabled: Mapped[bool] = mapped_column(default=True)
-    onboarding_completed_at: Mapped[datetime.datetime | None] = mapped_column(default=None)
+    onboarding_completed_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
     user: Mapped["User"] = relationship(back_populates="preferences")
