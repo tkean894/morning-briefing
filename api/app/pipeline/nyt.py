@@ -2,6 +2,7 @@ import datetime
 
 import httpx
 
+from app.pipeline.text_utils import clean_summary
 from app.pipeline.types import NormalizedArticle
 
 API_URL = "https://api.nytimes.com/svc/topstories/v2/home.json"
@@ -25,7 +26,7 @@ def fetch_nyt_articles(api_key: str) -> list[NormalizedArticle]:
                 external_id=item.get("uri", url),
                 url=url,
                 title=item.get("title", "").strip(),
-                summary=item.get("abstract"),
+                summary=clean_summary(item.get("abstract")),
                 published_at=published_at,
                 raw_payload=item,
             )

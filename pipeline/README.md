@@ -5,4 +5,5 @@ Daily batch jobs (ingestion, clustering, ranking, story generation, audio) run o
 The actual code lives at [`../api/app/pipeline`](../api/app/pipeline) rather than in this folder — it reuses the FastAPI app's DB models, config, and dependencies directly instead of duplicating them in a separate package. Run it locally with `cd api && python -m app.pipeline.ingest`; in CI it runs via [`.github/workflows/ingest.yml`](../.github/workflows/ingest.yml) on a daily schedule.
 
 - Phase 2 (done): RSS + Guardian/NYT ingestion into `raw_articles`
-- Phase 3+ (later): dedup/clustering, ranking, LLM story generation, audio
+- Phase 3 (done): dedup/clustering (`app/pipeline/cluster.py`) into `story_clusters`, with a first-pass importance score (source count, credibility, recency). Uses TF-IDF + complete-linkage agglomerative clustering rather than an embeddings API -- cheap and effective at this article volume; revisit if quality needs it later.
+- Phase 4+ (later): LLM story generation, audio

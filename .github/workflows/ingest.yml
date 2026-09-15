@@ -22,3 +22,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GUARDIAN_API_KEY: ${{ secrets.GUARDIAN_API_KEY }}
           NYT_API_KEY: ${{ secrets.NYT_API_KEY }}
+      - run: python -m app.pipeline.cluster
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

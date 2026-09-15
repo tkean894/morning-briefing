@@ -5,6 +5,7 @@ import feedparser
 import httpx
 
 from app.models import Source
+from app.pipeline.text_utils import clean_summary
 from app.pipeline.types import NormalizedArticle
 
 USER_AGENT = "MorningBriefsBot/0.1 (+https://github.com/tkean894/morning-briefing)"
@@ -39,7 +40,7 @@ def fetch_rss_source(source: Source) -> list[NormalizedArticle]:
                 external_id=external_id,
                 url=url,
                 title=entry.get("title", "").strip(),
-                summary=entry.get("summary"),
+                summary=clean_summary(entry.get("summary")),
                 published_at=_to_datetime(entry.get("published_parsed")),
                 raw_payload={
                     "title": entry.get("title"),

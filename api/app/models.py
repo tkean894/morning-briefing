@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Date, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -73,6 +73,24 @@ class Source(Base):
     active: Mapped[bool] = mapped_column(default=True)
 
 
+class StoryCluster(Base):
+    """A group of raw_articles from different sources judged to cover the
+    same real-world event, produced by app.pipeline.cluster."""
+
+    __tablename__ = "story_clusters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cluster_date: Mapped[datetime.date] = mapped_column(Date, index=True)
+    category: Mapped[str]
+    importance_score: Mapped[float] = mapped_column(default=0.0)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+
+    articles: Mapped[list["RawArticle"]] = relationship(back_populates="cluster")
+
+
 class RawArticle(Base):
     __tablename__ = "raw_articles"
     __table_args__ = (UniqueConstraint("source_id", "external_id"),)
@@ -91,8 +109,11 @@ class RawArticle(Base):
         default=lambda: datetime.datetime.now(datetime.timezone.utc),
     )
     raw_payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+    cluster_id: Mapped[int | None] = mapped_column(ForeignKey("story_clusters.id"))
+    cluster_similarity: Mapped[float | None]
 
     source: Mapped["Source"] = relationship()
+    cluster: Mapped["StoryCluster | None"] = relationship(back_populates="articles")
 
 
 class UserPreference(Base):
