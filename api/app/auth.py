@@ -34,8 +34,8 @@ def _verify_session_token(token: str) -> str:
     try:
         signing_key = _jwks_client().get_signing_key_from_jwt(token)
         claims = jwt.decode(token, signing_key.key, algorithms=["RS256"])
-    except Exception as exc:
-        logger.error(
+    except jwt.PyJWTError as exc:
+        logger.warning(
             "Clerk token verification failed: %s: %s", type(exc).__name__, exc
         )
         raise HTTPException(status_code=401, detail="Invalid session token") from exc
