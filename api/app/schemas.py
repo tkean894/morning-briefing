@@ -62,6 +62,8 @@ class BriefingOut(BaseModel):
     estimated_read_minutes: float = 0.0
     digest: DigestOut | None = None
     stories: list[BriefingStoryOut] = []
+    audio_url: str | None = None
+    audio_duration_seconds: int | None = None
 
 
 class RelatedStoryOut(BaseModel):

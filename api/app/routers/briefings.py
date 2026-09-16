@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.assembly import assemble_briefing
 from app.auth import get_current_user
 from app.db import get_db
-from app.models import DailyDigest, User, UserPreference
+from app.models import AudioBriefing, DailyDigest, User, UserPreference
 from app.schemas import BriefingOut, BriefingStoryOut, DigestOut
 
 router = APIRouter()
@@ -27,6 +27,21 @@ def get_todays_briefing(
         digest_row = db.get(DailyDigest, today) if today else None
         if digest_row:
             digest_out = DigestOut(bullets=digest_row.bullets)
+
+    audio_url = None
+    audio_duration_seconds = None
+    if result["story_count"] > 0:
+        today = result["date"] if isinstance(result["date"], datetime.date) else None
+        if today:
+            audio_row = db.execute(
+                select(AudioBriefing).where(
+                    AudioBriefing.briefing_date == today,
+                    AudioBriefing.length_minutes == prefs.briefing_length_minutes,
+                )
+            ).scalar_one_or_none()
+            if audio_row:
+                audio_url = audio_row.audio_url
+                audio_duration_seconds = audio_row.duration_seconds
 
     stories_out = [
         BriefingStoryOut(
@@ -52,4 +67,6 @@ def get_todays_briefing(
         estimated_read_minutes=result.get("estimated_read_minutes", 0.0),
         digest=digest_out,
         stories=stories_out,
+        audio_url=audio_url,
+        audio_duration_seconds=audio_duration_seconds,
     )
