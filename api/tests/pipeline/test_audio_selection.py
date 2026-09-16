@@ -21,8 +21,9 @@ def _make_story(category: str, importance_score: float, word_count: int) -> Stor
 
 
 def test_select_stories_for_audio_respects_length_budget():
+    categories = ["technology", "business", "markets", "sports"]
     stories = [
-        _make_story("technology", importance_score=100 - i, word_count=AUDIO_WORDS_PER_MINUTE)
+        _make_story(categories[i % len(categories)], importance_score=100 - i, word_count=AUDIO_WORDS_PER_MINUTE)
         for i in range(10)
     ]
 

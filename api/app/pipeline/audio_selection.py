@@ -20,7 +20,7 @@ AUDIO_MUST_INCLUDE_COUNT = 2
 
 # Caps any one category (sports is the common flood case) from crowding out
 # the rest of the briefing, mirroring app.assembly.MAX_PER_CATEGORY_IN_BRIEFING.
-AUDIO_MAX_PER_CATEGORY = 5
+AUDIO_MAX_PER_CATEGORY = 4
 
 
 def _story_word_count(story: Story) -> int:
