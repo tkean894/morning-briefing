@@ -41,6 +41,8 @@ MAX_STORIES = 20
 MAX_PER_CATEGORY_IN_BRIEFING = 4
 
 
+# Mirrors app.pipeline.audio_selection._story_word_count -- duplicated
+# deliberately to keep that pure module free of any dependency on this one.
 def _story_word_count(story: Story) -> int:
     text = " ".join(
         [

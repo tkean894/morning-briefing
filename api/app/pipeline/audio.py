@@ -25,7 +25,9 @@ from app.config import settings
 from app.db import SessionLocal
 from app.models import AudioBriefing, Story
 from app.pipeline.audio_selection import (
-    estimate_duration_seconds,
+    AUDIO_WORDS_PER_MINUTE,
+    chunk_script_for_tts,
+    estimate_duration_seconds_from_text,
     select_stories_for_audio,
 )
 
@@ -79,8 +81,14 @@ def _generate_with_rate_limit(client: genai.Client, contents: str) -> str:
     raise RuntimeError("unreachable")
 
 
-def _build_script_prompt(stories: list[Story]) -> str:
-    lines = ["Today's stories, in the order to present them:", ""]
+def _build_script_prompt(stories: list[Story], target_length_minutes: int) -> str:
+    target_words = target_length_minutes * AUDIO_WORDS_PER_MINUTE
+    lines = [
+        f"Write a script of approximately {target_words} words (about {target_length_minutes} minutes spoken).",
+        "",
+        "Today's stories, in the order to present them:",
+        "",
+    ]
     for s in stories:
         lines.append(f"[{s.category}] {s.headline}")
         lines.append(f"Summary: {s.summary}")
@@ -101,19 +109,23 @@ def _tts_client() -> texttospeech.TextToSpeechClient:
 
 
 def _synthesize_speech(tts_client: texttospeech.TextToSpeechClient, script: str) -> bytes:
-    synthesis_input = texttospeech.SynthesisInput(text=script)
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US",
-        name="en-US-Standard-C",
-        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
-    )
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3
-    )
-    response = tts_client.synthesize_speech(
-        input=synthesis_input, voice=voice, audio_config=audio_config
-    )
-    return response.audio_content
+    chunks = chunk_script_for_tts(script)
+    audio_parts = []
+    for chunk in chunks:
+        synthesis_input = texttospeech.SynthesisInput(text=chunk)
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US",
+            name="en-US-Standard-C",
+            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
+        )
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+        response = tts_client.synthesize_speech(
+            input=synthesis_input, voice=voice, audio_config=audio_config
+        )
+        audio_parts.append(response.audio_content)
+    return b"".join(audio_parts)
 
 
 def _r2_client():
@@ -133,7 +145,7 @@ def _upload_to_r2(r2_client, audio_bytes: bytes, date: datetime.date, length_min
         Body=audio_bytes,
         ContentType="audio/mpeg",
     )
-    return f"{settings.r2_public_url_base}/{key}"
+    return f"{settings.r2_public_url_base.rstrip('/')}/{key}"
 
 
 def _generate_length(
@@ -150,12 +162,14 @@ def _generate_length(
         logger.info("No stories available for %d-minute audio briefing", length_minutes)
         return
 
-    prompt = _build_script_prompt(selected)
+    prompt = _build_script_prompt(selected, length_minutes)
     script = _generate_with_rate_limit(genai_client, prompt)
+    if not script:
+        raise RuntimeError("Gemini returned an empty script")
 
     audio_bytes = _synthesize_speech(tts_client, script)
     audio_url = _upload_to_r2(r2_client, audio_bytes, date, length_minutes)
-    duration_seconds = estimate_duration_seconds(selected)
+    duration_seconds = estimate_duration_seconds_from_text(script)
 
     db.add(
         AudioBriefing(

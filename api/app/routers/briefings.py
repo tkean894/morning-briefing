@@ -30,7 +30,7 @@ def get_todays_briefing(
 
     audio_url = None
     audio_duration_seconds = None
-    if result["story_count"] > 0:
+    if prefs.audio_enabled and result["story_count"] > 0:
         today = result["date"] if isinstance(result["date"], datetime.date) else None
         if today:
             audio_row = db.execute(

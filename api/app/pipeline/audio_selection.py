@@ -1,11 +1,13 @@
-"""Pure story-selection and duration-estimation logic for the shared daily
-audio briefing. Kept separate from app.pipeline.audio's Gemini/TTS/R2 I/O so
-it can be unit tested without any network calls.
+"""Pure story-selection, duration-estimation, and script-text helper logic
+for the shared daily audio briefing. Kept separate from app.pipeline.audio's
+Gemini/TTS/R2 I/O so it can be unit tested without any network calls.
 
 Unlike app.assembly (which personalizes per user), this selects the same
 story set for everyone, mirroring how DailyDigest is shared rather than
 personalized. See docs/superpowers/specs/2026-09-16-audio-briefing-design.md.
 """
+
+import re
 
 from app.models import Story
 
@@ -23,6 +25,8 @@ AUDIO_MUST_INCLUDE_COUNT = 2
 AUDIO_MAX_PER_CATEGORY = 4
 
 
+# Mirrors app.assembly._story_word_count -- duplicated deliberately to keep
+# this module free of any dependency on the personalization module.
 def _story_word_count(story: Story) -> int:
     text = " ".join(
         [
@@ -74,3 +78,37 @@ def estimate_duration_seconds(stories: list[Story]) -> int:
     total_words = sum(_story_word_count(s) for s in stories)
     minutes = total_words / AUDIO_WORDS_PER_MINUTE
     return round(minutes * 60)
+
+
+def estimate_duration_seconds_from_text(text: str) -> int:
+    """Estimates spoken duration from a script's own word count, for use
+    once the actual script text exists (more accurate than estimating from
+    the source stories' word count, since the script is a rephrasing)."""
+    words = len(text.split())
+    minutes = words / AUDIO_WORDS_PER_MINUTE
+    return round(minutes * 60)
+
+
+# Google Cloud TTS caps a single SynthesisInput at 5000 bytes; this leaves
+# headroom below that hard limit.
+TTS_MAX_CHUNK_BYTES = 4800
+
+
+def chunk_script_for_tts(script: str, max_bytes: int = TTS_MAX_CHUNK_BYTES) -> list[str]:
+    """Splits a script into chunks under Google Cloud TTS's per-request byte
+    limit, breaking on sentence boundaries so each chunk still sounds
+    natural when synthesized separately and the resulting audio is
+    concatenated."""
+    sentences = re.split(r"(?<=[.!?])\s+", script.strip())
+    chunks: list[str] = []
+    current = ""
+    for sentence in sentences:
+        candidate = f"{current} {sentence}".strip() if current else sentence
+        if current and len(candidate.encode("utf-8")) > max_bytes:
+            chunks.append(current)
+            current = sentence
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
