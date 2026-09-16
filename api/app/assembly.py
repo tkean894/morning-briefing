@@ -25,6 +25,12 @@ MUST_INCLUDE_COUNT = 2
 # still surface, it's just deprioritized rather than hidden outright.
 UNSELECTED_CATEGORY_WEIGHT = 0.3
 
+# Multiplier when the user narrowed a category to specific sub-interests
+# (e.g. picked NFL and College Football but not Soccer) and this story's
+# subcategory doesn't match any of them. Higher than UNSELECTED_CATEGORY_WEIGHT
+# since they do like the broad category, just not this particular sub-topic.
+NARROWED_MISMATCH_WEIGHT = 0.4
+
 WORDS_PER_MINUTE = 200
 MIN_STORIES = 3
 MAX_STORIES = 20
@@ -47,19 +53,36 @@ def _story_word_count(story: Story) -> int:
     return len(text.split())
 
 
-def _user_category_weights(db: Session, user: User) -> dict[str, float]:
-    """Maps a broad category slug -> the user's affinity weight for it, for
-    every broad interest the user selected (directly or via a specific
-    sub-interest under it)."""
+def _user_preferences_by_category(
+    db: Session, user: User
+) -> tuple[dict[str, float], dict[str, float], set[str]]:
+    """Returns (category_weights, specific_weights, narrowed_categories).
+
+    category_weights maps a broad category slug -> affinity weight, for
+    every broad interest selected either directly or via a specific
+    sub-interest under it. specific_weights maps a specific sub-interest
+    slug (e.g. "sports-nfl") -> its own affinity weight. narrowed_categories
+    is the set of broad categories where the user picked at least one
+    specific sub-interest -- meaning "give me these sub-topics", not "I like
+    everything in this category"."""
     rows = db.execute(
         select(UserInterest).where(UserInterest.user_id == user.id)
     ).scalars()
-    weights: dict[str, float] = {}
+    category_weights: dict[str, float] = {}
+    specific_weights: dict[str, float] = {}
+    narrowed_categories: set[str] = set()
     for ui in rows:
         interest = ui.interest
-        category_slug = interest.parent.slug if interest.parent else interest.slug
-        weights[category_slug] = max(weights.get(category_slug, 0), ui.affinity_weight)
-    return weights
+        if interest.parent:
+            category_slug = interest.parent.slug
+            specific_weights[interest.slug] = ui.affinity_weight
+            narrowed_categories.add(category_slug)
+        else:
+            category_slug = interest.slug
+        category_weights[category_slug] = max(
+            category_weights.get(category_slug, 0), ui.affinity_weight
+        )
+    return category_weights, specific_weights, narrowed_categories
 
 
 def assemble_briefing(db: Session, user: User, target_length_minutes: int) -> dict:
@@ -75,14 +98,21 @@ def assemble_briefing(db: Session, user: User, target_length_minutes: int) -> di
     if not all_stories:
         return {"date": today, "story_count": 0, "stories": []}
 
-    category_weights = _user_category_weights(db, user)
+    category_weights, specific_weights, narrowed_categories = (
+        _user_preferences_by_category(db, user)
+    )
 
     must_include = all_stories[:MUST_INCLUDE_COUNT]
     must_include_ids = {s.id for s in must_include}
     candidates = [s for s in all_stories if s.id not in must_include_ids]
 
     def combined_score(story: Story) -> float:
-        weight = category_weights.get(story.category, UNSELECTED_CATEGORY_WEIGHT)
+        if story.subcategory and story.subcategory in specific_weights:
+            weight = specific_weights[story.subcategory]
+        elif story.category in narrowed_categories:
+            weight = category_weights.get(story.category, 0) * NARROWED_MISMATCH_WEIGHT
+        else:
+            weight = category_weights.get(story.category, UNSELECTED_CATEGORY_WEIGHT)
         return story.importance_score * weight
 
     candidates.sort(key=combined_score, reverse=True)

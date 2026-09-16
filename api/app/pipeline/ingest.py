@@ -14,6 +14,28 @@ from app.pipeline.types import NormalizedArticle
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ingest")
 
+# Some general-interest RSS feeds (CBS Sports in particular) mix gambling/
+# betting-promo content in with real news. Not appropriate for a briefing
+# product -- filter it out at ingestion rather than letting it compete for
+# space in the story pool.
+SPAM_KEYWORDS = [
+    "promo code",
+    "bonus bet",
+    "betting site",
+    "betting guide",
+    "betting line",
+    "sportsbook",
+    "free bet",
+    "how to bet",
+    " odds:",
+    " odds,",
+]
+
+
+def _is_spam(article: NormalizedArticle) -> bool:
+    title = article.title.lower()
+    return any(keyword in title for keyword in SPAM_KEYWORDS)
+
 
 def _fetch(source: Source) -> list[NormalizedArticle]:
     if source.kind == "rss":
@@ -66,7 +88,7 @@ def run() -> None:
         total_new = 0
         for source in sources:
             try:
-                articles = _fetch(source)
+                articles = [a for a in _fetch(source) if not _is_spam(a)]
                 new_count = _upsert_articles(db, source, articles)
                 total_new += new_count
                 logger.info(

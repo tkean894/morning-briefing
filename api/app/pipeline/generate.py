@@ -20,6 +20,7 @@ from sqlalchemy import delete, select
 
 from app.config import settings
 from app.db import SessionLocal
+from app.interest_taxonomy import SUBCATEGORIES_BY_CATEGORY
 from app.models import DailyDigest, RawArticle, Story, StoryCluster, StorySource
 
 logger = logging.getLogger("generate")
@@ -46,7 +47,8 @@ Rules:
 2. Write in a neutral, factual tone. Avoid sensational or clickbait language.
 3. If the topic is politically contested or the sources reflect differing interpretations, separate established facts from perspective: set is_sensitive=true and fill perspectives with brief, attributed viewpoint summaries (e.g. "Democrats argue X", "The company maintains Y"). Otherwise set is_sensitive=false and perspectives=[].
 4. summary is 2-4 sentences. why_it_matters and what_to_watch are each 1-2 sentences.
-5. key_facts is 3-5 short, specific, verifiable facts or numbers drawn directly from the sources."""
+5. key_facts is 3-5 short, specific, verifiable facts or numbers drawn directly from the sources.
+6. If a list of subcategory options is provided, pick the single one that best fits this story so it can be matched to readers who want that specific topic rather than the whole broad category. Only pick from the given list, exactly as spelled. If none clearly fit, set subcategory to null."""
 
 DIGEST_SYSTEM_PROMPT = "You compress today's top news stories into extremely concise bullets for a 'today in 30 seconds' briefing section."
 
@@ -59,6 +61,7 @@ class StoryOutput(BaseModel):
     key_facts: list[str]
     is_sensitive: bool
     perspectives: list[str]
+    subcategory: str | None = None
 
 
 class DigestOutput(BaseModel):
@@ -96,7 +99,12 @@ def _generate_with_rate_limit(
 
 
 def _build_cluster_prompt(category: str, articles: list[RawArticle]) -> str:
-    lines = [f"Category: {category}", "", "Source articles covering this story:"]
+    lines = [f"Category: {category}"]
+    subcats = SUBCATEGORIES_BY_CATEGORY.get(category, [])
+    if subcats:
+        options = ", ".join(slug for slug, _name in subcats)
+        lines.append(f"Subcategory options: {options}")
+    lines += ["", "Source articles covering this story:"]
     for a in articles:
         lines.append(f"- [{a.source.name}] {a.title}")
         if a.summary:
@@ -146,10 +154,14 @@ def _generate_story(client: genai.Client, db, cluster: StoryCluster) -> Story | 
     )
     result: StoryOutput = response.parsed
 
+    valid_subcats = {slug for slug, _name in SUBCATEGORIES_BY_CATEGORY.get(cluster.category, [])}
+    subcategory = result.subcategory if result.subcategory in valid_subcats else None
+
     story = Story(
         cluster_id=cluster.id,
         date=cluster.cluster_date,
         category=cluster.category,
+        subcategory=subcategory,
         headline=result.headline,
         summary=result.summary,
         why_it_matters=result.why_it_matters,

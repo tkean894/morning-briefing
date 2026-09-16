@@ -135,6 +135,14 @@ SOURCES: list[dict] = [
         "credibility_tier": 2,
     },
     {
+        "slug": "cbs-sports",
+        "name": "CBS Sports",
+        "kind": "rss",
+        "category": "sports",
+        "feed_url": "https://www.cbssports.com/rss/headlines/",
+        "credibility_tier": 2,
+    },
+    {
         "slug": "bbc-sport",
         "name": "BBC Sport",
         "kind": "rss",

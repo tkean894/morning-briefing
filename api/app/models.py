@@ -128,6 +128,7 @@ class Story(Base):
     )
     date: Mapped[datetime.date] = mapped_column(Date, index=True)
     category: Mapped[str]
+    subcategory: Mapped[str | None]
     headline: Mapped[str]
     summary: Mapped[str]
     why_it_matters: Mapped[str]

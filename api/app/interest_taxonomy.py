@@ -53,3 +53,10 @@ TAXONOMY: list[dict] = [
     {"slug": "science-health", "name": "Science & Health", "children": []},
     {"slug": "culture", "name": "Culture & Entertainment", "children": []},
 ]
+
+# category slug -> [(subcategory slug, name), ...], for prompting the LLM
+# during story generation and for validating its answer.
+SUBCATEGORIES_BY_CATEGORY: dict[str, list[tuple[str, str]]] = {
+    parent["slug"]: [(c["slug"], c["name"]) for c in parent["children"]]
+    for parent in TAXONOMY
+}
