@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db import engine
-from app.routers import briefings, interests, me
+from app.routers import briefings, interests, me, stories
 
 app = FastAPI(title="Morning Briefs API")
 app.include_router(interests.router)
 app.include_router(me.router)
 app.include_router(briefings.router)
+app.include_router(stories.router)
 
 app.add_middleware(
     CORSMiddleware,

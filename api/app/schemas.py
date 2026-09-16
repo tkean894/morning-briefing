@@ -62,3 +62,25 @@ class BriefingOut(BaseModel):
     estimated_read_minutes: float = 0.0
     digest: DigestOut | None = None
     stories: list[BriefingStoryOut] = []
+
+
+class RelatedStoryOut(BaseModel):
+    id: int
+    headline: str
+    category: str
+
+    model_config = {"from_attributes": True}
+
+
+class StoryDetailOut(BaseModel):
+    id: int
+    category: str
+    headline: str
+    summary: str
+    why_it_matters: str
+    what_to_watch: str
+    key_facts: list[str]
+    is_sensitive: bool
+    perspectives: list[str]
+    sources: list[StorySourceOut]
+    related: list[RelatedStoryOut] = []

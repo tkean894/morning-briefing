@@ -20,6 +20,49 @@ export type PreferencesInput = {
   audio_enabled: boolean;
 };
 
+export type StorySource = { name: string; url: string };
+
+export type BriefingStory = {
+  id: number;
+  category: string;
+  headline: string;
+  summary: string;
+  why_it_matters: string;
+  what_to_watch: string;
+  key_facts: string[];
+  is_sensitive: boolean;
+  perspectives: string[];
+  sources: StorySource[];
+  inclusion_reason: "must_include" | "personalized";
+};
+
+export type Digest = { bullets: string[] };
+
+export type Briefing = {
+  date: string;
+  briefing_length_minutes: BriefingLength;
+  story_count: number;
+  estimated_read_minutes: number;
+  digest: Digest | null;
+  stories: BriefingStory[];
+};
+
+export type RelatedStory = { id: number; headline: string; category: string };
+
+export type StoryDetail = {
+  id: number;
+  category: string;
+  headline: string;
+  summary: string;
+  why_it_matters: string;
+  what_to_watch: string;
+  key_facts: string[];
+  is_sensitive: boolean;
+  perspectives: string[];
+  sources: StorySource[];
+  related: RelatedStory[];
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Render's free tier can cold-start after inactivity; give it real time to
@@ -42,6 +85,32 @@ export async function fetchMe(token: string): Promise<Me> {
     signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error("Failed to load profile");
+  return res.json();
+}
+
+export async function fetchBriefing(token: string): Promise<Briefing> {
+  const res = await fetch(`${API_URL}/briefings/today`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error("Failed to load briefing");
+  return res.json();
+}
+
+export class StoryNotFoundError extends Error {}
+
+export async function fetchStory(
+  token: string,
+  id: number | string
+): Promise<StoryDetail> {
+  const res = await fetch(`${API_URL}/stories/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
+  });
+  if (res.status === 404) throw new StoryNotFoundError();
+  if (!res.ok) throw new Error("Failed to load story");
   return res.json();
 }
 
