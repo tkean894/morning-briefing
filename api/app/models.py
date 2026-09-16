@@ -116,6 +116,65 @@ class RawArticle(Base):
     cluster: Mapped["StoryCluster | None"] = relationship(back_populates="articles")
 
 
+class Story(Base):
+    """The finished, user-facing story generated from a StoryCluster by
+    app.pipeline.generate. At most one per cluster."""
+
+    __tablename__ = "stories"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cluster_id: Mapped[int] = mapped_column(
+        ForeignKey("story_clusters.id", ondelete="CASCADE"), unique=True
+    )
+    date: Mapped[datetime.date] = mapped_column(Date, index=True)
+    category: Mapped[str]
+    headline: Mapped[str]
+    summary: Mapped[str]
+    why_it_matters: Mapped[str]
+    what_to_watch: Mapped[str]
+    key_facts: Mapped[list] = mapped_column(JSONB, default=list)
+    is_sensitive: Mapped[bool] = mapped_column(default=False)
+    perspectives: Mapped[list] = mapped_column(JSONB, default=list)
+    importance_score: Mapped[float] = mapped_column(default=0.0)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+
+    cluster: Mapped["StoryCluster"] = relationship()
+    sources: Mapped[list["StorySource"]] = relationship(
+        back_populates="story", cascade="all, delete-orphan"
+    )
+
+
+class StorySource(Base):
+    __tablename__ = "story_sources"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    story_id: Mapped[int] = mapped_column(
+        ForeignKey("stories.id", ondelete="CASCADE")
+    )
+    name: Mapped[str]
+    url: Mapped[str]
+
+    story: Mapped["Story"] = relationship(back_populates="sources")
+
+
+class DailyDigest(Base):
+    """The 'Today in 30 seconds' bullets -- one shared row per day, since
+    the most-important-things-to-know is an objective judgment rather than
+    something personalized per user."""
+
+    __tablename__ = "daily_digests"
+
+    digest_date: Mapped[datetime.date] = mapped_column(Date, primary_key=True)
+    bullets: Mapped[list] = mapped_column(JSONB, default=list)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.timezone.utc),
+    )
+
+
 class UserPreference(Base):
     __tablename__ = "user_preferences"
 

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     guardian_api_key: str = ""
     nyt_api_key: str = ""
+    gemini_api_key: str = ""
 
 
 settings = Settings()
