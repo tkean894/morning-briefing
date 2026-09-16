@@ -68,22 +68,22 @@ export function PreferencesForm({
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-10">
       <section className="space-y-4">
-        <h2 className="text-lg font-medium text-neutral-900">
+        <h2 className="font-serif text-lg font-medium text-ink">
           What do you want to follow?
         </h2>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-ink/60">
           Pick as many broad topics as you like. We&apos;ll still surface
           major stories outside these when they really matter.
         </p>
         <div className="space-y-5">
           {interests.map((broad) => (
             <div key={broad.id} className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-neutral-800">
+              <label className="flex items-center gap-2 text-sm font-medium text-ink/80">
                 <input
                   type="checkbox"
                   checked={selected.has(broad.id)}
                   onChange={() => toggle(broad.id)}
-                  className="h-4 w-4 rounded border-neutral-300"
+                  className="h-4 w-4 rounded border-ink/25"
                 />
                 {broad.name}
               </label>
@@ -94,8 +94,8 @@ export function PreferencesForm({
                       key={child.id}
                       className={`cursor-pointer rounded-full border px-3 py-1 text-xs transition ${
                         selected.has(child.id)
-                          ? "border-neutral-900 bg-neutral-900 text-white"
-                          : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                          ? "border-ink bg-ink text-paper"
+                          : "border-ink/15 text-ink/60 hover:border-ink/40"
                       }`}
                     >
                       <input
@@ -115,7 +115,7 @@ export function PreferencesForm({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-medium text-neutral-900">
+        <h2 className="font-serif text-lg font-medium text-ink">
           How long should your briefing be?
         </h2>
         <div className="flex gap-3">
@@ -124,10 +124,10 @@ export function PreferencesForm({
               type="button"
               key={option}
               onClick={() => setLength(option)}
-              className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+              className={`rounded-md border px-4 py-3 text-sm font-medium transition ${
                 length === option
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
+                  ? "border-ink bg-ink text-paper"
+                  : "border-ink/15 text-ink/60 hover:border-ink/40"
               }`}
             >
               {option} min
@@ -137,12 +137,12 @@ export function PreferencesForm({
       </section>
 
       <section className="space-y-3">
-        <label className="flex items-center gap-2 text-sm font-medium text-neutral-800">
+        <label className="flex items-center gap-2 text-sm font-medium text-ink/80">
           <input
             type="checkbox"
             checked={audioEnabled}
             onChange={(e) => setAudioEnabled(e.target.checked)}
-            className="h-4 w-4 rounded border-neutral-300"
+            className="h-4 w-4 rounded border-ink/25"
           />
           Include an audio version of my briefing
         </label>
@@ -153,7 +153,7 @@ export function PreferencesForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+        className="w-full rounded-md bg-ink px-4 py-3 text-sm font-medium text-paper transition hover:bg-ink/85 disabled:opacity-50"
       >
         {submitting ? "Saving..." : submitLabel}
       </button>

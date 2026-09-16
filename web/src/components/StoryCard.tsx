@@ -1,46 +1,42 @@
 import Link from "next/link";
 import type { BriefingStory } from "@/lib/api";
-import { categoryColor, categoryName } from "@/lib/categories";
+import { categoryAccent, categoryName } from "@/lib/categories";
 
 export function StoryCard({ story }: { story: BriefingStory }) {
-  return (
-    <article className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm shadow-neutral-200/50">
-      <span
-        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${categoryColor(
-          story.category
-        )}`}
-      >
-        {categoryName(story.category)}
-      </span>
+  const accent = categoryAccent(story.category);
 
-      <h3 className="mt-3 text-lg font-semibold text-neutral-900">
+  return (
+    <article
+      data-story-id={story.id}
+      className="rounded-lg border border-ink/10 bg-white p-6"
+      style={{ borderLeft: `3px solid ${accent}` }}
+    >
+      <p className="text-xs font-medium" style={{ color: accent }}>
+        {categoryName(story.category)}
+      </p>
+
+      <h3 className="mt-2 font-serif text-xl font-medium text-ink">
         {story.headline}
       </h3>
-      <p className="mt-2 text-[15px] leading-relaxed text-neutral-600">
+      <p className="mt-2 text-[15px] leading-relaxed text-ink/70">
         {story.summary}
       </p>
 
-      <dl className="mt-4 space-y-2 text-sm">
-        <div>
-          <dt className="inline font-medium text-neutral-800">
-            Why it matters:{" "}
-          </dt>
-          <dd className="inline text-neutral-600">{story.why_it_matters}</dd>
-        </div>
-        <div>
-          <dt className="inline font-medium text-neutral-800">
-            What to watch:{" "}
-          </dt>
-          <dd className="inline text-neutral-600">{story.what_to_watch}</dd>
-        </div>
-      </dl>
+      <div className="mt-4 space-y-2 text-sm text-ink/70">
+        <p>
+          <span className="font-medium text-ink">Why it matters. </span>
+          {story.why_it_matters}
+        </p>
+        <p>
+          <span className="font-medium text-ink">What to watch. </span>
+          {story.what_to_watch}
+        </p>
+      </div>
 
       {story.is_sensitive && story.perspectives.length > 0 && (
-        <div className="mt-4 rounded-2xl bg-neutral-50 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-            Different perspectives
-          </p>
-          <ul className="mt-2 space-y-1 text-sm text-neutral-600">
+        <div className="mt-4 rounded-md bg-paper p-4">
+          <p className="text-sm font-medium text-ink">Different perspectives</p>
+          <ul className="mt-2 space-y-1 text-sm text-ink/70">
             {story.perspectives.map((p, i) => (
               <li key={i}>{p}</li>
             ))}
@@ -48,15 +44,15 @@ export function StoryCard({ story }: { story: BriefingStory }) {
         </div>
       )}
 
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <p className="truncate text-xs text-neutral-400">
-          {story.sources.map((s) => s.name).join(" · ")}
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-ink/10 pt-4">
+        <p className="truncate text-xs text-ink/50">
+          {story.sources.map((s) => s.name).join(", ")}
         </p>
         <Link
           href={`/story/${story.id}`}
-          className="shrink-0 text-sm font-medium text-neutral-900 underline underline-offset-4"
+          className="shrink-0 text-sm font-medium text-ink underline underline-offset-4 hover:text-ink/70"
         >
-          Dive Deeper
+          Dive deeper
         </Link>
       </div>
     </article>

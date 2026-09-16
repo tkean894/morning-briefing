@@ -24,10 +24,10 @@ export default async function OnboardingPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-16">
       <div className="mb-10 space-y-2">
-        <h1 className="text-2xl font-semibold text-neutral-900">
+        <h1 className="font-serif text-2xl font-medium text-ink">
           Let&apos;s set up your briefing
         </h1>
-        <p className="text-neutral-500">
+        <p className="text-ink/60">
           Takes about a minute. You can always change this later.
         </p>
       </div>

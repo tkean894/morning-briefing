@@ -24,15 +24,15 @@ export default async function PreferencesSettingsPage() {
     <div className="mx-auto w-full max-w-2xl px-6 py-16">
       <Link
         href="/"
-        className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
+        className="text-sm font-medium text-ink/50 hover:text-ink"
       >
         &larr; Back to your brief
       </Link>
       <div className="mt-6 mb-10 space-y-2">
-        <h1 className="text-2xl font-semibold text-neutral-900">
+        <h1 className="font-serif text-2xl font-medium text-ink">
           Briefing preferences
         </h1>
-        <p className="text-neutral-500">
+        <p className="text-ink/60">
           Update your interests and briefing length any time.
         </p>
       </div>

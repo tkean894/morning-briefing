@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { fetchStory, StoryNotFoundError } from "@/lib/api";
 import { ApiUnavailable } from "@/components/ApiUnavailable";
-import { categoryColor, categoryName } from "@/lib/categories";
+import { categoryAccent, categoryName } from "@/lib/categories";
 
 export const maxDuration = 30;
 
@@ -27,69 +27,70 @@ export default async function StoryPage({
     return <ApiUnavailable />;
   }
 
+  const accent = categoryAccent(story.category);
+
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
       <Link
         href="/"
-        className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
+        className="text-sm font-medium text-ink/50 hover:text-ink"
       >
         &larr; Back to your brief
       </Link>
 
-      <span
-        className={`mt-6 inline-block rounded-full px-3 py-1 text-xs font-medium ${categoryColor(
-          story.category
-        )}`}
-      >
+      <p className="mt-6 text-sm font-medium" style={{ color: accent }}>
         {categoryName(story.category)}
-      </span>
+      </p>
 
-      <h1 className="mt-3 text-2xl font-semibold text-neutral-900">
+      <h1 className="mt-2 font-serif text-2xl font-medium text-ink">
         {story.headline}
       </h1>
-      <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">
+      <p className="mt-4 text-[15px] leading-relaxed text-ink/70">
         {story.summary}
       </p>
 
-      <div className="mt-8 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm shadow-neutral-200/50">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-          Key Facts
+      <div
+        className="mt-8 rounded-lg border border-ink/10 p-6"
+        style={{ borderLeft: `3px solid ${accent}` }}
+      >
+        <h2 className="font-serif text-lg font-medium text-ink">
+          Key facts
         </h2>
-        <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+        <ul className="mt-3 space-y-2 text-sm text-ink/70">
           {story.key_facts.map((fact, i) => (
             <li key={i} className="flex gap-2">
-              <span className="text-neutral-300">&bull;</span>
+              <span className="text-ink/30">&mdash;</span>
               <span>{fact}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <dl className="mt-8 space-y-6">
+      <div className="mt-8 space-y-6">
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-            Why It Matters
-          </dt>
-          <dd className="mt-2 text-[15px] text-neutral-700">
+          <h2 className="font-serif text-lg font-medium text-ink">
+            Why it matters
+          </h2>
+          <p className="mt-2 text-[15px] text-ink/70">
             {story.why_it_matters}
-          </dd>
+          </p>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-            What to Watch
-          </dt>
-          <dd className="mt-2 text-[15px] text-neutral-700">
+          <h2 className="font-serif text-lg font-medium text-ink">
+            What to watch
+          </h2>
+          <p className="mt-2 text-[15px] text-ink/70">
             {story.what_to_watch}
-          </dd>
+          </p>
         </div>
-      </dl>
+      </div>
 
       {story.is_sensitive && story.perspectives.length > 0 && (
-        <div className="mt-8 rounded-2xl bg-neutral-50 p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Different Perspectives
+        <div className="mt-8 rounded-lg border border-ink/10 bg-paper p-5">
+          <h2 className="font-serif text-lg font-medium text-ink">
+            Different perspectives
           </h2>
-          <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+          <ul className="mt-3 space-y-2 text-sm text-ink/70">
             {story.perspectives.map((p, i) => (
               <li key={i}>{p}</li>
             ))}
@@ -98,9 +99,7 @@ export default async function StoryPage({
       )}
 
       <div className="mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-          Sources
-        </h2>
+        <h2 className="font-serif text-lg font-medium text-ink">Sources</h2>
         <ul className="mt-3 space-y-2">
           {story.sources.map((source) => (
             <li key={source.url}>
@@ -108,7 +107,7 @@ export default async function StoryPage({
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-neutral-900 underline underline-offset-4"
+                className="text-sm font-medium text-ink underline underline-offset-4 hover:text-ink/70"
               >
                 {source.name}
               </a>
@@ -118,16 +117,16 @@ export default async function StoryPage({
       </div>
 
       {story.related.length > 0 && (
-        <div className="mt-10 border-t border-neutral-200 pt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-            Related Coverage
+        <div className="mt-10 border-t border-ink/10 pt-8">
+          <h2 className="font-serif text-lg font-medium text-ink">
+            Related coverage
           </h2>
           <ul className="mt-3 space-y-2">
             {story.related.map((r) => (
               <li key={r.id}>
                 <Link
                   href={`/story/${r.id}`}
-                  className="text-sm font-medium text-neutral-700 hover:text-neutral-900"
+                  className="text-sm font-medium text-ink/70 hover:text-ink"
                 >
                   {r.headline}
                 </Link>
