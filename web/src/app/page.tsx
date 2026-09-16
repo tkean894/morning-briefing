@@ -6,6 +6,7 @@ import { fetchBriefing, fetchMe } from "@/lib/api";
 import { ApiUnavailable } from "@/components/ApiUnavailable";
 import { StoryCard } from "@/components/StoryCard";
 import { ReadProgress } from "@/components/ReadProgress";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { categoryAccent, categoryName } from "@/lib/categories";
 import { formatBriefingDate } from "@/lib/format";
 
@@ -103,7 +104,8 @@ export default async function Home() {
       </div>
 
       {briefing.story_count > 0 && (
-        <div className="mb-10 flex flex-wrap gap-3">
+        <div className="mb-10 flex flex-wrap items-center gap-3">
+          {briefing.audio_url && <AudioPlayer audioUrl={briefing.audio_url} />}
           <a
             href="#briefing"
             className="rounded-md bg-ink px-5 py-3 text-sm font-medium text-paper transition hover:bg-ink/85"

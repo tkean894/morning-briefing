@@ -45,6 +45,8 @@ export type Briefing = {
   estimated_read_minutes: number;
   digest: Digest | null;
   stories: BriefingStory[];
+  audio_url: string | null;
+  audio_duration_seconds: number | null;
 };
 
 export type RelatedStory = { id: number; headline: string; category: string };
