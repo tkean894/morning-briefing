@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { fetchInterests, fetchMe, type Interest, type Me } from "@/lib/api";
 import { PreferencesForm } from "@/components/PreferencesForm";
@@ -21,7 +22,13 @@ export default async function PreferencesSettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-6 py-16">
-      <div className="mb-10 space-y-2">
+      <Link
+        href="/"
+        className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
+      >
+        &larr; Back to your brief
+      </Link>
+      <div className="mt-6 mb-10 space-y-2">
         <h1 className="text-2xl font-semibold text-neutral-900">
           Briefing preferences
         </h1>
@@ -33,7 +40,7 @@ export default async function PreferencesSettingsPage() {
         interests={interests}
         initial={me}
         submitLabel="Save changes"
-        redirectTo="/settings/preferences"
+        redirectTo="/"
       />
     </div>
   );
